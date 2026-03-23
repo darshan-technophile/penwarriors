@@ -1,0 +1,923 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pen Warriors - Cyberpunk Arena</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Orbitron', sans-serif;
+            background-color: #050505;
+            background-image: 
+                linear-gradient(rgba(0, 255, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 255, 255, 0.03) 1px, transparent 1px);
+            background-size: 30px 30px;
+        }
+        
+        /* Neon Glow Effects */
+        .neon-text-blue { text-shadow: 0 0 5px #00f3ff, 0 0 10px #00f3ff; }
+        .neon-text-pink { text-shadow: 0 0 5px #ff00ff, 0 0 10px #ff00ff; }
+        .neon-border-blue { box-shadow: 0 0 10px #00f3ff, inset 0 0 5px #00f3ff; border: 1px solid #00f3ff; }
+        .neon-border-pink { box-shadow: 0 0 10px #ff00ff, inset 0 0 5px #ff00ff; border: 1px solid #ff00ff; }
+        
+        .slider-thumb::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            background: #fff;
+            box-shadow: 0 0 10px #fff, 0 0 20px #0ff;
+            cursor: pointer;
+            border-radius: 50%;
+        }
+
+        #arena {
+            cursor: crosshair;
+            background: radial-gradient(circle at center, #111827 0%, #000000 100%);
+        }
+    </style>
+</head>
+<body class="text-gray-100 flex flex-col items-center justify-center min-h-screen p-4">
+
+    <!-- HEADER -->
+    <header class="mb-4 text-center">
+        <h1 class="text-4xl md:text-6xl font-black italic tracking-widest neon-text-blue uppercase">Pen Warriors</h1>
+        <p class="text-sm text-cyan-400 tracking-wider mt-2">Classroom Warfare Simulator v1.0</p>
+    </header>
+
+    <!-- MAIN GAME CONTAINER -->
+    <div class="flex flex-col lg:flex-row gap-6 w-full max-w-7xl">
+        
+        <!-- LEFT PANEL: Controls & Stats -->
+        <div class="flex-1 flex flex-col gap-4 order-2 lg:order-1">
+            
+            <!-- Player 1 Config -->
+            <div class="p-4 bg-gray-900/80 neon-border-blue rounded-lg">
+                <h2 class="text-xl text-cyan-400 font-bold mb-2">Player 1 (Blue)</h2>
+                <div class="flex justify-between items-center mb-2">
+                    <span class="text-xs uppercase text-gray-500 font-bold tracking-wider">Series Score</span>
+                    <span class="text-cyan-400 font-bold text-xl neon-text-blue">WINS: <span id="p1-wins" class="text-white">0</span></span>
+                </div>
+                <select id="p1-class" class="w-full bg-gray-800 border border-cyan-500 text-cyan-100 p-2 rounded mb-2 focus:outline-none focus:ring-2 focus:ring-cyan-500">
+                    <option value="viper">Gel-Viper (Balanced)</option>
+                    <option value="titan">The Titan (Heavy)</option>
+                    <option value="ghost">Neon Ghost (Light)</option>
+                    <option value="integra">Integra Blue (Striker)</option>
+                </select>
+                <div class="mt-2">
+                    <div class="flex justify-between text-xs mb-1">
+                        <span>Stability</span>
+                        <span id="p1-hp-text">100%</span>
+                    </div>
+                    <div class="w-full bg-gray-800 h-2 rounded overflow-hidden">
+                        <div id="p1-hp-bar" class="bg-cyan-500 h-full w-full transition-all duration-300"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Player 2 Config -->
+            <div class="p-4 bg-gray-900/80 neon-border-pink rounded-lg">
+                <h2 class="text-xl text-fuchsia-400 font-bold mb-2">Player 2 (Pink)</h2>
+                <div class="flex justify-between items-center mb-2">
+                    <span class="text-xs uppercase text-gray-500 font-bold tracking-wider">Series Score</span>
+                    <span class="text-fuchsia-400 font-bold text-xl neon-text-pink">WINS: <span id="p2-wins" class="text-white">0</span></span>
+                </div>
+                <select id="p2-class" class="w-full bg-gray-800 border border-fuchsia-500 text-fuchsia-100 p-2 rounded mb-2 focus:outline-none focus:ring-2 focus:ring-fuchsia-500">
+                    <option value="viper">Gel-Viper (Balanced)</option>
+                    <option value="titan">The Titan (Heavy)</option>
+                    <option value="ghost">Neon Ghost (Light)</option>
+                    <option value="integra">Integra Blue (Striker)</option>
+                </select>
+                <div class="mt-2">
+                    <div class="flex justify-between text-xs mb-1">
+                        <span>Stability</span>
+                        <span id="p2-hp-text">100%</span>
+                    </div>
+                    <div class="w-full bg-gray-800 h-2 rounded overflow-hidden">
+                        <div id="p2-hp-bar" class="bg-fuchsia-500 h-full w-full transition-all duration-300"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Battle Log -->
+            <div class="flex-1 bg-black/90 border border-gray-700 p-3 rounded h-48 overflow-y-auto font-mono text-xs shadow-inner">
+                <div class="sticky top-0 bg-black/90 border-b border-gray-700 pb-1 mb-2 text-gray-400 uppercase font-bold">Battle Log</div>
+                <ul id="battle-log" class="space-y-1">
+                    <li class="text-gray-500">System: Arena Initialized...</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- CENTER PANEL: Arena -->
+        <div class="flex-initial order-1 lg:order-2 relative group">
+            <div class="absolute top-4 left-4 z-10 text-white/50 text-xs pointer-events-none">
+                MOUSE: Aim<br>HOLD CLICK: Charge<br>RELEASE: Fire<br>SPACE: Ability
+            </div>
+            <canvas id="arena" width="600" height="600" class="rounded-xl shadow-2xl border-2 border-gray-700 w-full max-w-[600px] aspect-square block mx-auto"></canvas>
+            
+            <!-- Turn Indicator Overlay -->
+            <div id="turn-indicator" class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 pointer-events-none transition-opacity duration-500 opacity-0">
+                <h1 id="turn-text" class="text-5xl font-black text-white neon-text-blue uppercase tracking-tighter">P1 Turn</h1>
+            </div>
+        </div>
+
+        <!-- RIGHT PANEL: Action -->
+        <div class="flex-1 flex flex-col gap-6 order-3 lg:order-3">
+            
+            <!-- Control Deck -->
+            <div class="bg-gray-800 p-6 rounded-xl border-t-4 border-cyan-500 shadow-xl">
+                <label class="block text-cyan-400 text-sm font-bold mb-4 uppercase tracking-wider">
+                    Charge Power <span id="power-val" class="text-white ml-2">0%</span>
+                </label>
+                <div class="w-full h-4 bg-gray-700 rounded-lg overflow-hidden relative border border-gray-600">
+                    <div id="power-bar" class="h-full bg-gradient-to-r from-cyan-500 to-blue-500 w-0 transition-none"></div>
+                </div>
+                
+                <div class="mt-6 grid grid-cols-3 gap-2">
+                    <button id="reset-btn" class="bg-gray-700 hover:bg-gray-600 text-white font-bold py-3 px-4 rounded border-b-4 border-gray-900 active:border-b-0 active:mt-1 transition-all">
+                        RESET
+                    </button>
+                    <button id="replay-btn" class="bg-fuchsia-600 hover:bg-fuchsia-500 text-white font-bold py-3 px-4 rounded border-b-4 border-fuchsia-800 active:border-b-0 active:mt-1 transition-all shadow-[0_0_15px_rgba(192,38,211,0.5)]">
+                        REPLAY
+                    </button>
+                    <button id="strike-btn" class="bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-3 px-4 rounded border-b-4 border-cyan-800 active:border-b-0 active:mt-1 transition-all shadow-[0_0_15px_rgba(8,145,178,0.5)]">
+                        HOLD
+                    </button>
+                </div>
+            </div>
+
+            <!-- Instructions -->
+            <div class="text-gray-400 text-sm p-4 border border-gray-800 rounded">
+                <h3 class="text-white font-bold mb-2">How to Play:</h3>
+                <ul class="list-disc pl-4 space-y-1">
+                    <li>Select class for P1 and P2.</li>
+                    <li><strong>Hold Click</strong> to charge power.</li>
+                    <li>Move mouse over arena to <strong>AIM</strong>.</li>
+                    <li><strong>Release</strong> to flick the pen.</li>
+                    <li>Knock opponent off or reduce Stability!</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- GAME OVER OVERLAY -->
+    <div id="game-over-screen" class="hidden fixed inset-0 bg-black/95 z-50 flex flex-col items-center justify-center backdrop-blur-sm">
+        <h2 id="winner-text" class="text-5xl md:text-7xl font-black italic text-white mb-2 uppercase tracking-widest">PLAYER 1 WINS</h2>
+        <p id="win-reason" class="text-2xl text-gray-400 mb-8 tracking-wider font-bold">VIA RING OUT</p>
+        <button id="restart-btn" class="bg-gray-800 hover:bg-gray-700 text-white font-bold py-4 px-10 rounded-xl border-2 border-cyan-500 shadow-[0_0_15px_rgba(8,145,178,0.5)] transition-all transform hover:scale-105 uppercase tracking-widest">
+            Play Again
+        </button>
+    </div>
+
+    <script>
+        // --- Game Constants & Configuration ---
+        const CLASSES = {
+            titan: { name: "The Titan", color: "#FBBF24", mass: 40, radius: 28, friction: 0.96, damageMult: 1.5, ability: "Shield" },
+            viper: { name: "Gel-Viper", color: "#22D3EE", mass: 25, radius: 22, friction: 0.98, damageMult: 1.0, ability: "Spike" },
+            ghost: { name: "Neon Ghost", color: "#E879F9", mass: 15, radius: 16, friction: 0.99, damageMult: 0.8, ability: "Speed" },
+            integra: { name: "Integra Blue", color: "#3B82F6", mass: 20, radius: 20, friction: 0.95, damageMult: 1.2, ability: "Shock Absorber" }
+        };
+
+        const canvas = document.getElementById('arena');
+        const ctx = canvas.getContext('2d');
+        const logEl = document.getElementById('battle-log');
+        
+        let animationId;
+        let isAnimating = false;
+        let currentPlayer = 1; // 1 or 2
+        let mousePos = { x: 0, y: 0 };
+        let particles = [];
+        let shakeDuration = 0;
+        let shakeIntensity = 0;
+        let isCharging = false;
+        let chargeValue = 0;
+        let chargeDirection = 1;
+        let replayData = [];
+        let isReplaying = false;
+        let replayIndex = 0;
+        let replayFrameDelay = 0;
+        let p1Wins = 0;
+        let p2Wins = 0;
+        let comboCount = 0;
+        
+        // Game State objects
+        const p1 = { x: 100, y: 300, vx: 0, vy: 0, hp: 100, type: 'viper', ...CLASSES.viper, id: 1, abilityCD: 0, abilityActive: false, angle: 0 };
+        const p2 = { x: 500, y: 300, vx: 0, vy: 0, hp: 100, type: 'viper', ...CLASSES.viper, id: 2, abilityCD: 0, abilityActive: false, angle: 0 };
+
+        // --- Audio System (Web Audio API) ---
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+        function playSound(type, intensity = 1) {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            const now = audioCtx.currentTime;
+
+            if (type === 'strike') {
+                // Swoosh effect
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(200, now);
+                osc.frequency.exponentialRampToValueAtTime(50, now + 0.3);
+                gain.gain.setValueAtTime(0.1, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+                osc.start(now);
+                osc.stop(now + 0.3);
+            } else if (type === 'hit') {
+                // Impact effect (Sawtooth for crunch)
+                osc.type = 'sawtooth';
+                const freq = 100 + Math.min(intensity * 10, 800);
+                osc.frequency.setValueAtTime(freq, now);
+                osc.frequency.exponentialRampToValueAtTime(50, now + 0.1);
+                gain.gain.setValueAtTime(Math.min(0.2, intensity * 0.01), now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+                osc.start(now);
+                osc.stop(now + 0.1);
+            } else if (type === 'wall') {
+                // Bumper effect
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(800, now);
+                osc.frequency.exponentialRampToValueAtTime(400, now + 0.1);
+                gain.gain.setValueAtTime(0.05, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+                osc.start(now);
+                osc.stop(now + 0.1);
+            }
+        }
+
+        function triggerShake(force) {
+            shakeIntensity = Math.min(force * 0.5, 15);
+            shakeDuration = 10;
+        }
+
+        function log(msg, color = "text-gray-300") {
+            const li = document.createElement('li');
+            li.className = color;
+            li.innerText = `> ${msg}`;
+            logEl.prepend(li);
+        }
+
+        // --- Physics Engine ---
+        
+        function updateStats(playerObj, typeKey) {
+            const stats = CLASSES[typeKey];
+            playerObj.type = typeKey;
+            playerObj.mass = stats.mass;
+            playerObj.radius = stats.radius;
+            playerObj.friction = stats.friction;
+            playerObj.damageMult = stats.damageMult;
+            playerObj.color = stats.color;
+            playerObj.ability = stats.ability;
+        }
+
+        function applyFriction(p) {
+            p.vx *= p.friction;
+            p.vy *= p.friction;
+            // Stop if too slow
+            if (Math.abs(p.vx) < 0.05) p.vx = 0;
+            if (Math.abs(p.vy) < 0.05) p.vy = 0;
+        }
+
+        function checkBoundary(p) {
+            // Check if center is outside canvas bounds
+            if (p.x < 0 || p.x > canvas.width || p.y < 0 || p.y > canvas.height) {
+                return true; // Fell off
+            }
+            return false;
+        }
+
+        function resolveWalls(p) {
+            const wallBreakThreshold = 15;
+            let bounced = false;
+            
+            if (p.x < p.radius) {
+                if (Math.abs(p.vx) < wallBreakThreshold) { p.x = p.radius; p.vx *= -0.8; bounced = true; }
+            } else if (p.x > canvas.width - p.radius) {
+                if (Math.abs(p.vx) < wallBreakThreshold) { p.x = canvas.width - p.radius; p.vx *= -0.8; bounced = true; }
+            }
+            
+            if (p.y < p.radius) {
+                if (Math.abs(p.vy) < wallBreakThreshold) { p.y = p.radius; p.vy *= -0.8; bounced = true; }
+            } else if (p.y > canvas.height - p.radius) {
+                if (Math.abs(p.vy) < wallBreakThreshold) { p.y = canvas.height - p.radius; p.vy *= -0.8; bounced = true; }
+            }
+
+            if (bounced) {
+                comboCount++;
+                playSound('wall');
+                log(`Wall Bounce! Combo x${comboCount}`, "text-yellow-300");
+                triggerShake(5);
+            }
+        }
+
+        function resolveCollision(a, b) {
+            const dx = b.x - a.x;
+            const dy = b.y - a.y;
+            const dist = Math.hypot(dx, dy);
+
+            if (dist < a.radius + b.radius) {
+                // Calculate overlap
+                const overlap = (a.radius + b.radius) - dist;
+                
+                // Normal vector
+                const nx = dx / dist;
+                const ny = dy / dist;
+
+                // Separate circles to prevent sticking
+                const mSum = a.mass + b.mass;
+                a.x -= nx * overlap * (b.mass / mSum);
+                a.y -= ny * overlap * (b.mass / mSum);
+                b.x += nx * overlap * (a.mass / mSum);
+                b.y += ny * overlap * (a.mass / mSum);
+
+                // Elastic Collision Response
+                const vRelX = a.vx - b.vx;
+                const vRelY = a.vy - b.vy;
+                const velAlongNormal = vRelX * nx + vRelY * ny;
+
+                // Do not resolve if velocities are separating
+                if (velAlongNormal > 0) return;
+
+                // Bounciness (Restitution)
+                const e = 0.7; 
+
+                const j = -(1 + e) * velAlongNormal;
+                const impulse = j / (1 / a.mass + 1 / b.mass);
+
+                // Apply impulse
+                const impulseX = impulse * nx;
+                const impulseY = impulse * ny;
+
+                // Shock Absorber Passive: Reduce knockback by 15%
+                const aKnockbackMult = a.type === 'integra' ? 0.85 : 1.0;
+                const bKnockbackMult = b.type === 'integra' ? 0.85 : 1.0;
+
+                a.vx -= (impulseX / a.mass) * aKnockbackMult;
+                a.vy -= (impulseY / a.mass) * aKnockbackMult;
+                b.vx += (impulseX / b.mass) * bKnockbackMult;
+                b.vy += (impulseY / b.mass) * bKnockbackMult;
+
+                // Damage Logic based on impact force
+                const impactForce = Math.abs(impulse);
+                let damage = Math.floor(impactForce * 0.5);
+
+                // Combo Multiplier
+                if (comboCount > 0) {
+                    const mult = 1 + (comboCount * 0.5);
+                    damage = Math.floor(damage * mult);
+                    log(`COMBO HIT! (x${mult})`, "text-orange-400 font-bold");
+                }
+                comboCount++;
+
+                // Critical Hit Logic (Head-on collision)
+                // Check alignment of relative velocity vs collision normal. >0.95 is nearly parallel.
+                const relativeSpeed = Math.hypot(vRelX, vRelY);
+                const impactAlignment = relativeSpeed > 0 ? Math.abs(velAlongNormal) / relativeSpeed : 0;
+                
+                if (damage > 1 && impactAlignment > 0.95) {
+                    damage *= 2;
+                    log("CRITICAL HIT! (2x DMG)", "text-yellow-400 font-black");
+                    triggerShake(impactForce * 2);
+                }
+                
+                if (damage > 1) {
+                    playSound('hit', impactForce);
+                    triggerShake(impactForce);
+                    // Apply Damage (Check Shields)
+                    let dmgA = damage;
+                    let dmgB = damage;
+
+                    if (a.abilityActive && a.type === 'titan') dmgA = 0;
+                    if (b.abilityActive && b.type === 'titan') dmgB = 0;
+
+                    // Viper Bonus Damage
+                    if (a.abilityActive && a.type === 'viper') dmgB += 10;
+                    if (b.abilityActive && b.type === 'viper') dmgA += 10;
+
+                    a.hp = Math.max(0, a.hp - dmgA);
+                    b.hp = Math.max(0, b.hp - dmgB);
+                    log(`CRASH! Impact Force: ${Math.floor(impactForce)}.`, 'text-red-400 font-bold');
+                    updateUI();
+                }
+            }
+        }
+
+        function gameLoop() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            ctx.save();
+            
+            if (isReplaying) {
+                drawGrid();
+                // Slow Motion Replay Logic (25% speed)
+                replayFrameDelay++;
+                if (replayFrameDelay % 4 === 0) {
+                    replayIndex++;
+                }
+                if (replayIndex < replayData.length) {
+                    const frame = replayData[replayIndex];
+                    frame.particles.forEach(p => drawParticle(p));
+                    drawPlayer(frame.p1);
+                    drawPlayer(frame.p2);
+                    ctx.restore();
+                    animationId = requestAnimationFrame(gameLoop);
+                    return;
+                } else {
+                    isReplaying = false;
+                    log("Replay ended.");
+                }
+            }
+
+            if (shakeDuration > 0) {
+                const dx = (Math.random() - 0.5) * shakeIntensity;
+                const dy = (Math.random() - 0.5) * shakeIntensity;
+                ctx.translate(dx, dy);
+                shakeDuration--;
+            }
+
+            // Charging Logic
+            if (isCharging) {
+                chargeValue += 2 * chargeDirection;
+                if (chargeValue >= 100) { chargeValue = 100; chargeDirection = -1; }
+                if (chargeValue <= 0) { chargeValue = 0; chargeDirection = 1; }
+                updatePowerUI();
+            }
+
+            // Draw Grid
+            drawGrid();
+            updateAndDrawParticles();
+
+            // Update Physics if moving
+            if (isAnimating) {
+                p1.x += p1.vx; p1.y += p1.vy;
+                p2.x += p2.vx; p2.y += p2.vy;
+                
+                // Spin Effect
+                p1.angle += Math.hypot(p1.vx, p1.vy) * 0.05;
+                p2.angle += Math.hypot(p2.vx, p2.vy) * 0.05;
+
+                // Record Replay Frame
+                replayData.push({
+                    p1: { ...p1 },
+                    p2: { ...p2 },
+                    particles: particles.map(p => ({...p}))
+                });
+
+                // Particle creation
+                const p1Speed = Math.hypot(p1.vx, p1.vy);
+                if (p1Speed > 1.5) createParticles(p1, p1Speed);
+                const p2Speed = Math.hypot(p2.vx, p2.vy);
+                if (p2Speed > 1.5) createParticles(p2, p2Speed);
+
+
+                applyFriction(p1);
+                applyFriction(p2);
+                resolveWalls(p1);
+                resolveWalls(p2);
+                resolveCollision(p1, p2);
+
+                // Check Win/Loss by Ring Out
+                if (checkBoundary(p1)) endGame(2, "RING OUT");
+                else if (checkBoundary(p2)) endGame(1, "RING OUT");
+                
+                // Check Win/Loss by Stability
+                else if (p1.hp <= 0) endGame(2, "DESTRUCTION");
+                else if (p2.hp <= 0) endGame(1, "DESTRUCTION");
+
+                // Stop animation if both stopped
+                if (p1.vx === 0 && p1.vy === 0 && p2.vx === 0 && p2.vy === 0) {
+                    isAnimating = false;
+                    switchTurn();
+                }
+            } else if (!isReplaying) {
+                // Aim: Point active pen tip towards mouse
+                const activeP = currentPlayer === 1 ? p1 : p2;
+                const dx = mousePos.x - activeP.x;
+                const dy = mousePos.y - activeP.y;
+                activeP.angle = Math.atan2(dy, dx) + Math.PI / 2;
+            }
+
+            // Draw Players
+            drawPlayer(p1);
+            drawPlayer(p2);
+
+            // Draw Aim Line
+            if (!isAnimating && p1.hp > 0 && p2.hp > 0 && !isCharging) {
+                drawAimingLine();
+            }
+            
+            // Draw Charge Indicator
+            if (isCharging) {
+                drawChargeLine();
+            }
+
+            ctx.restore();
+
+            animationId = requestAnimationFrame(gameLoop);
+        }
+
+        // --- Rendering ---
+        function drawGrid() {
+            ctx.strokeStyle = "rgba(0, 255, 255, 0.1)";
+            ctx.lineWidth = 1;
+            const step = 50;
+            for (let x = 0; x <= canvas.width; x += step) {
+                ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke();
+            }
+            for (let y = 0; y <= canvas.height; y += step) {
+                ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke();
+            }
+            
+            // Arena Border
+            ctx.strokeStyle = "#22d3ee"; // Cyan
+            ctx.lineWidth = 4;
+            ctx.strokeRect(0, 0, canvas.width, canvas.height);
+        }
+
+        function drawPlayer(p) {
+            ctx.save();
+
+            let shakeX = 0;
+            let shakeY = 0;
+            if (isCharging && p.id === currentPlayer) {
+                const intensity = (chargeValue / 100) * 5; // Shake gets stronger with charge
+                shakeX = (Math.random() - 0.5) * intensity;
+                shakeY = (Math.random() - 0.5) * intensity;
+            }
+            
+            ctx.translate(p.x + shakeX, p.y + shakeY);
+            ctx.rotate(p.angle);
+            
+            // Pen Visuals
+            const color = p.id === 1 ? "#22D3EE" : "#E879F9";
+            const w = p.radius * 0.8;
+            const h = p.radius * 3.2;
+
+            // Tip
+            ctx.beginPath();
+            ctx.moveTo(0, -h / 2);
+            ctx.lineTo(w / 2, -h / 2 + w);
+            ctx.lineTo(-w / 2, -h / 2 + w);
+            ctx.closePath();
+            ctx.fillStyle = "#ffffff";
+            ctx.fill();
+
+            // Body
+            ctx.fillStyle = color;
+            ctx.shadowBlur = 15;
+            ctx.shadowColor = color;
+            ctx.fillRect(-w / 2, -h / 2 + w, w, h - w);
+
+            // Grip Lines & Clip
+            ctx.fillStyle = "rgba(0,0,0,0.3)";
+            ctx.shadowBlur = 0;
+            ctx.fillRect(-w / 2, -h / 2 + w + (h * 0.1), w, h * 0.05);
+            ctx.fillStyle = "rgba(255,255,255,0.8)";
+            ctx.fillRect(w / 4, -h / 2 + w + (h * 0.1), w / 4, h * 0.5);
+            
+            // Ability Visual (Ring)
+            if (p.abilityActive) {
+                ctx.shadowBlur = 0;
+                ctx.strokeStyle = "#FFFF00";
+                ctx.lineWidth = 2;
+                ctx.beginPath(); ctx.arc(0, 0, p.radius + 5, 0, Math.PI * 2); ctx.stroke();
+            }
+
+            // Label
+            ctx.shadowBlur = 0;
+            ctx.fillStyle = "#fff";
+            ctx.rotate(-p.angle); // Un-rotate text so it stays readable
+            ctx.font = "10px Orbitron";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.fillText(p.id === 1 ? "P1" : "P2", 0, 0);
+
+            // Vector indicator (if moving)
+            if (isAnimating && (Math.abs(p.vx) > 0.1 || Math.abs(p.vy) > 0.1)) {
+                ctx.beginPath();
+                ctx.moveTo(0,0);
+                ctx.lineTo(p.vx * 5, p.vy * 5);
+                ctx.strokeStyle = "rgba(255,255,255,0.5)";
+                ctx.stroke();
+            }
+
+            ctx.restore();
+        }
+
+        function drawAimingLine() {
+            const activeP = currentPlayer === 1 ? p1 : p2;
+            const color = currentPlayer === 1 ? "#00f3ff" : "#ff00ff";
+
+            // Vector from ball to mouse
+            const dx = mousePos.x - activeP.x;
+            const dy = mousePos.y - activeP.y;
+            const angle = Math.atan2(dy, dx);
+            
+            // Visual length cap for UI cleanliness
+            const len = Math.min(Math.hypot(dx, dy), 100); 
+
+            ctx.save();
+            ctx.translate(activeP.x, activeP.y);
+            ctx.rotate(angle);
+
+            // Draw arrow
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 2;
+            ctx.setLineDash([5, 5]);
+            ctx.beginPath();
+            ctx.moveTo(activeP.radius + 5, 0);
+            ctx.lineTo(activeP.radius + 5 + len, 0);
+            ctx.stroke();
+
+            // Arrowhead
+            ctx.setLineDash([]);
+            ctx.fillStyle = color;
+            ctx.beginPath();
+            ctx.moveTo(activeP.radius + 5 + len, 0);
+            ctx.lineTo(activeP.radius + len, -5);
+            ctx.lineTo(activeP.radius + len, 5);
+            ctx.fill();
+
+            ctx.restore();
+        }
+
+        function drawChargeLine() {
+            const activeP = currentPlayer === 1 ? p1 : p2;
+            const color = currentPlayer === 1 ? "#00f3ff" : "#ff00ff";
+
+            // Reuse aiming calculation
+            const dx = mousePos.x - activeP.x;
+            const dy = mousePos.y - activeP.y;
+            const angle = Math.atan2(dy, dx);
+            
+            const maxLen = 100;
+            const len = (chargeValue / 100) * maxLen;
+
+            ctx.save();
+            ctx.translate(activeP.x, activeP.y);
+            ctx.rotate(angle);
+
+            ctx.fillStyle = color;
+            ctx.fillRect(activeP.radius + 5, -2, len, 4);
+
+            ctx.restore();
+        }
+
+        function drawParticle(p) {
+             ctx.save();
+             ctx.globalAlpha = Math.max(0, p.life / p.maxLife);
+             ctx.fillStyle = p.color;
+             ctx.beginPath(); ctx.arc(p.x, p.y, p.size * ctx.globalAlpha, 0, Math.PI * 2); ctx.fill();
+             ctx.restore();
+        }
+
+        // --- Particle System ---
+        function createParticles(p, speed) {
+            const particleCount = Math.min(Math.floor(speed), 3);
+            for (let i = 0; i < particleCount; i++) {
+                const angle = Math.atan2(p.vy, p.vx) + Math.PI; // Opposite direction
+                const spread = (Math.random() - 0.5) * 0.6; // Random spread
+                const particleSpeed = Math.random() * speed * 0.3;
+                
+                particles.push({
+                    x: p.x,
+                    y: p.y,
+                    vx: Math.cos(angle + spread) * particleSpeed,
+                    vy: Math.sin(angle + spread) * particleSpeed,
+                    life: 30 + Math.random() * 20,
+                    maxLife: 50,
+                    color: p.id === 1 ? "#00f3ff" : "#ff00ff",
+                    size: Math.random() * 2 + 1
+                });
+            }
+        }
+
+        function updateAndDrawParticles() {
+            for (let i = particles.length - 1; i >= 0; i--) {
+                const p = particles[i];
+                p.x += p.vx;
+                p.y += p.vy;
+                p.life--;
+
+                if (p.life <= 0) {
+                    particles.splice(i, 1);
+                } else {
+                    ctx.save();
+                    const opacity = Math.max(0, p.life / p.maxLife);
+                    ctx.globalAlpha = opacity;
+                    ctx.fillStyle = p.color;
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.size * opacity, 0, Math.PI * 2); // Size shrinks too
+                    ctx.fill();
+                    ctx.restore();
+                }
+            }
+        }
+
+        // --- Game Logic ---
+
+        function strike(powerVal) {
+            if (isAnimating) return;
+
+            comboCount = 0;
+            const activeP = currentPlayer === 1 ? p1 : p2;
+            const power = powerVal / 4; // Scale down for velocity
+
+            // Calculate direction based on mouse relative to ball
+            const dx = mousePos.x - activeP.x;
+            const dy = mousePos.y - activeP.y;
+            const angle = Math.atan2(dy, dx);
+
+            activeP.vx = Math.cos(angle) * power;
+            activeP.vy = Math.sin(angle) * power;
+
+            log(`Player ${currentPlayer} strikes with power ${Math.floor(powerVal)}!`, currentPlayer===1 ? "text-cyan-300" : "text-fuchsia-300");
+            playSound('strike');
+            replayData = []; // Clear previous replay
+            isAnimating = true;
+        }
+
+        function startCharge(e) {
+            if (isAnimating) return;
+            if (e.type === 'mousedown' && e.button !== 0) return; // Only left click
+            isCharging = true;
+            chargeValue = 0;
+            chargeDirection = 1;
+        }
+
+        function endCharge(e) {
+            if (!isCharging) return;
+            isCharging = false;
+            strike(chargeValue);
+            chargeValue = 0;
+            updatePowerUI();
+        }
+
+        function activateAbility() {
+            const p = currentPlayer === 1 ? p1 : p2;
+            const now = Date.now();
+
+            if (now < p.abilityCD) {
+                log(`Ability on Cooldown!`, "text-gray-500");
+                return;
+            }
+
+            p.abilityActive = true;
+            p.abilityCD = now + 10000; // 10s Cooldown
+
+            log(`${p.name} activated ${CLASSES[p.type].ability}!`, "text-yellow-400 font-bold");
+
+            // Specific Effects
+            if (p.type === 'ghost') {
+                // Speed Boost
+                p.vx *= 1.8; 
+                p.vy *= 1.8;
+            } else if (p.type === 'titan') {
+                // Shield handled in collision. Heavy Mass?
+                p.mass *= 2; 
+            } else if (p.type === 'integra') {
+                // Active: Temporary Mass Boost for 'Anchor' effect
+                p.mass *= 1.5;
+            }
+            
+            // Duration Timer (Reset flags)
+            setTimeout(() => {
+                p.abilityActive = false;
+                if (p.type === 'titan') p.mass = CLASSES[p.type].mass; // Reset Mass
+                if (p.type === 'integra') p.mass = CLASSES[p.type].mass;
+                log(`${p.name} ability ended.`, "text-gray-500");
+            }, 3000);
+        }
+
+        function switchTurn() {
+            currentPlayer = currentPlayer === 1 ? 2 : 1;
+            const turnText = document.getElementById('turn-text');
+            const indicator = document.getElementById('turn-indicator');
+            
+            turnText.innerText = `P${currentPlayer} TURN`;
+            turnText.className = currentPlayer === 1 
+                ? "text-5xl font-black text-white neon-text-blue uppercase tracking-tighter"
+                : "text-5xl font-black text-white neon-text-pink uppercase tracking-tighter";
+            
+            // Flash indicator
+            indicator.classList.remove('opacity-0');
+            setTimeout(() => indicator.classList.add('opacity-0'), 1000);
+            
+            log(`Turn: Player ${currentPlayer}`);
+        }
+
+        function endGame(winnerId, reason) {
+            isAnimating = false;
+            const winnerName = winnerId === 1 ? "PLAYER 1" : "PLAYER 2";
+            const neonClass = winnerId === 1 ? "neon-text-blue" : "neon-text-pink";
+            const logColor = winnerId === 1 ? "text-cyan-400" : "text-fuchsia-400";
+
+            // Update Tournament Stats
+            if (winnerId === 1) p1Wins++; else p2Wins++;
+            updateScoreUI();
+
+            const screen = document.getElementById('game-over-screen');
+            const restartBtn = document.getElementById('restart-btn');
+
+            document.getElementById('winner-text').className = `text-5xl md:text-7xl font-black italic text-white mb-2 uppercase tracking-widest ${neonClass}`;
+            
+            if (p1Wins >= 2 || p2Wins >= 2) {
+                document.getElementById('winner-text').innerText = `${winnerName} WINS SERIES`;
+                restartBtn.innerText = "START NEW TOURNAMENT";
+            } else {
+                document.getElementById('winner-text').innerText = `${winnerName} WINS ROUND`;
+                restartBtn.innerText = "NEXT ROUND";
+            }
+            
+            document.getElementById('win-reason').innerText = `VIA ${reason}`;
+            
+            screen.classList.remove('hidden');
+            log(`*** ${winnerName} WINS via ${reason} ***`, logColor + " font-black");
+        }
+
+        function resetGame() {
+            // Check if tournament ended
+            if (p1Wins >= 2 || p2Wins >= 2) {
+                p1Wins = 0;
+                p2Wins = 0;
+                updateScoreUI();
+                log("Tournament Reset. New Series Started.");
+            }
+
+            document.getElementById('game-over-screen').classList.add('hidden');
+            p1.x = 100; p1.y = 300; p1.vx = 0; p1.vy = 0; p1.hp = 100; p1.abilityCD = 0; p1.abilityActive = false;
+            p2.x = 500; p2.y = 300; p2.vx = 0; p2.vy = 0; p2.hp = 100; p2.abilityCD = 0; p2.abilityActive = false;
+            particles = [];
+            currentPlayer = 1;
+            isAnimating = false;
+            updateUI();
+            log("Game Reset.");
+        }
+
+        function updateScoreUI() {
+            document.getElementById('p1-wins').innerText = p1Wins;
+            document.getElementById('p2-wins').innerText = p2Wins;
+        }
+
+        function updateUI() {
+            document.getElementById('p1-hp-bar').style.width = p1.hp + "%";
+            document.getElementById('p1-hp-text').innerText = p1.hp + "%";
+            document.getElementById('p2-hp-bar').style.width = p2.hp + "%";
+            document.getElementById('p2-hp-text').innerText = p2.hp + "%";
+        }
+
+        function updatePowerUI() {
+            document.getElementById('power-bar').style.width = chargeValue + "%";
+            document.getElementById('power-val').innerText = Math.floor(chargeValue) + "%";
+        }
+
+        // --- Input Handling ---
+        canvas.addEventListener('mousemove', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            mousePos.x = (e.clientX - rect.left) * scaleX;
+            mousePos.y = (e.clientY - rect.top) * scaleY;
+        });
+
+        canvas.addEventListener('mousedown', startCharge);
+        window.addEventListener('mouseup', endCharge);
+
+        const strikeBtn = document.getElementById('strike-btn');
+        strikeBtn.addEventListener('mousedown', startCharge);
+        strikeBtn.addEventListener('mouseup', endCharge);
+        strikeBtn.addEventListener('mouseleave', endCharge); // Release if mouse leaves button
+
+        document.getElementById('reset-btn').addEventListener('click', resetGame);
+        document.getElementById('restart-btn').addEventListener('click', resetGame);
+        document.getElementById('replay-btn').addEventListener('click', () => {
+            if (isAnimating || replayData.length === 0) return;
+            isReplaying = true;
+            replayIndex = 0;
+            log("Starting Slow-Mo Replay...");
+        });
+        
+        // Spacebar Handler
+        document.addEventListener('keydown', (e) => {
+            if (e.code === 'Space') {
+                e.preventDefault();
+                activateAbility();
+            }
+        });
+
+        document.getElementById('p1-class').addEventListener('change', (e) => updateStats(p1, e.target.value));
+        document.getElementById('p2-class').addEventListener('change', (e) => updateStats(p2, e.target.value));
+
+        // --- Initialize ---
+        updateStats(p1, 'viper');
+        updateStats(p2, 'viper');
+        requestAnimationFrame(gameLoop);
+
+    </script>
+</body>
+</html>
