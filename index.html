@@ -36,6 +36,8 @@
         #arena {
             cursor: crosshair;
             background: radial-gradient(circle at center, #111827 0%, #000000 100%);
+            touch-action: none;
+            user-select: none;
         }
     </style>
 </head>
@@ -135,12 +137,15 @@
                     <div id="power-bar" class="h-full bg-gradient-to-r from-cyan-500 to-blue-500 w-0 transition-none"></div>
                 </div>
                 
-                <div class="mt-6 grid grid-cols-3 gap-2">
+                <div class="mt-6 grid grid-cols-2 gap-2">
                     <button id="reset-btn" class="bg-gray-700 hover:bg-gray-600 text-white font-bold py-3 px-4 rounded border-b-4 border-gray-900 active:border-b-0 active:mt-1 transition-all">
                         RESET
                     </button>
                     <button id="replay-btn" class="bg-fuchsia-600 hover:bg-fuchsia-500 text-white font-bold py-3 px-4 rounded border-b-4 border-fuchsia-800 active:border-b-0 active:mt-1 transition-all shadow-[0_0_15px_rgba(192,38,211,0.5)]">
                         REPLAY
+                    </button>
+                    <button id="ability-btn" class="bg-amber-600 hover:bg-amber-500 text-white font-bold py-3 px-4 rounded border-b-4 border-amber-800 active:border-b-0 active:mt-1 transition-all shadow-[0_0_15px_rgba(217,119,6,0.5)]">
+                        SKILL
                     </button>
                     <button id="strike-btn" class="bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-3 px-4 rounded border-b-4 border-cyan-800 active:border-b-0 active:mt-1 transition-all shadow-[0_0_15px_rgba(8,145,178,0.5)]">
                         HOLD
@@ -156,7 +161,7 @@
                     <li><strong>Hold Click</strong> to charge power.</li>
                     <li>Move mouse over arena to <strong>AIM</strong>.</li>
                     <li><strong>Release</strong> to flick the pen.</li>
-                    <li>Knock opponent off or reduce Stability!</li>
+                    <li>Use <strong>SKILL</strong> or Spacebar for abilities!</li>
                 </ul>
             </div>
         </div>
@@ -882,21 +887,37 @@
         }
 
         // --- Input Handling ---
-        canvas.addEventListener('mousemove', (e) => {
+        function handlePointerMove(e) {
+            if (e.touches && e.touches.length > 0) {
+                // Prevent scrolling when touching the arena
+                if (e.target === canvas) e.preventDefault();
+            }
+            
             const rect = canvas.getBoundingClientRect();
             const scaleX = canvas.width / rect.width;
             const scaleY = canvas.height / rect.height;
-            mousePos.x = (e.clientX - rect.left) * scaleX;
-            mousePos.y = (e.clientY - rect.top) * scaleY;
-        });
+            
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            
+            mousePos.x = (clientX - rect.left) * scaleX;
+            mousePos.y = (clientY - rect.top) * scaleY;
+        }
 
+        canvas.addEventListener('mousemove', handlePointerMove);
+        canvas.addEventListener('touchmove', handlePointerMove, { passive: false });
+
+        canvas.addEventListener('touchstart', (e) => { e.preventDefault(); startCharge(e); }, { passive: false });
         canvas.addEventListener('mousedown', startCharge);
         window.addEventListener('mouseup', endCharge);
+        window.addEventListener('touchend', endCharge);
 
         const strikeBtn = document.getElementById('strike-btn');
         strikeBtn.addEventListener('mousedown', startCharge);
         strikeBtn.addEventListener('mouseup', endCharge);
         strikeBtn.addEventListener('mouseleave', endCharge); // Release if mouse leaves button
+        strikeBtn.addEventListener('touchstart', (e) => { e.preventDefault(); startCharge(e); }, { passive: false });
+        strikeBtn.addEventListener('touchend', endCharge);
 
         document.getElementById('reset-btn').addEventListener('click', resetGame);
         document.getElementById('restart-btn').addEventListener('click', resetGame);
@@ -906,6 +927,7 @@
             replayIndex = 0;
             log("Starting Slow-Mo Replay...");
         });
+        document.getElementById('ability-btn').addEventListener('click', activateAbility);
         
         // Spacebar Handler
         document.addEventListener('keydown', (e) => {
